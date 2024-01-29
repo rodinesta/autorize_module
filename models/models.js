@@ -41,7 +41,7 @@ const User = sequelize.define('user', {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
-            is: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+            is: /(?=.*[0-9])(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*]{8,}/
         },
     },
     is_confirmed: {
@@ -50,4 +50,4 @@ const User = sequelize.define('user', {
     },
 });
 
-module.exports = User;
+module.exports = {User};
