@@ -50,4 +50,9 @@ const User = sequelize.define('user', {
     },
 });
 
-module.exports = {User};
+const Token = sequelize.define('token', {
+    userId: {type: DataTypes.INTEGER},
+    refreshToken: {type: DataTypes.STRING}
+})
+
+module.exports = {User, Token};
