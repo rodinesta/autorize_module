@@ -3,6 +3,7 @@ const ApiError = require('../error/ApiError')
 const bcrypt = require('bcrypt')
 const { User } = require('../models/models')
 const tokenController = require('./tokenController')
+const mailController = require('./mailController')
 
 class UserController {
     async signUp(req, res, next) {
@@ -15,8 +16,10 @@ class UserController {
 
             const { name, surname, middlename, email, username, password } = req.body
 
-            const candidate = await User.findOne({ where: { username } })
-            if (candidate) return next(ApiError.badRequest('Пользователь с таким логином уже существует'))
+            const candidateLogin = await User.findOne({ where: { username } })
+            if (candidateLogin) return next(ApiError.badRequest('Пользователь с таким логином уже существует'))
+            const candidateEmail = await User.findOne({ where: { email } })
+            if (candidateEmail) return next(ApiError.badRequest('Почта уже зарегистрирована'))
             
             const hashPassword = await bcrypt.hash(password, 5)
             const user = await User.create({ name, surname, middlename, email, username, password: hashPassword })
@@ -25,6 +28,8 @@ class UserController {
             await tokenController.saveToken(user.id, tokens.refreshToken)
 
             res.cookie('refreshToken', tokens.refreshToken, {maxAge: 7 * 24 * 60 * 60 * 1000, httpOnly: true})
+            await mailController.sendConfirmMail(email, `${process.env.API_URL}/api/user/activate/${user.id}`)
+
             return res.json({ tokens });
         } catch (e) {
             return next(ApiError.badRequest(e.message));
@@ -48,6 +53,20 @@ class UserController {
             return next(ApiError.badRequest(e.message))
         }
         
+    }
+
+    //  Здесь следует заменить userId на нормальную ссылку, но ее нужно где то хранить... (вероятно в самом юзере)))
+    async activate(req, res, next) {
+        try {
+            const {link} = req.params
+            const user = await User.findOne({where: {id: link}})
+            user.is_confirmed = true
+            await user.save()
+    
+            return res.json({ msg: user.is_confirmed })
+        } catch (e) {
+            return next(ApiError.badRequest(e.message))
+        }
     }
 }
 
