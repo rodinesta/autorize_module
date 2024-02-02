@@ -68,6 +68,42 @@ class UserController {
             return next(ApiError.badRequest(e.message))
         }
     }
+
+    //  Здесь следует заменить userId на нормальную ссылку, но ее нужно где то хранить... (вероятно в самом юзере)))
+    async sendResetPasswordLink(req, res, next) {
+        try {
+            const {link} = req.params
+            const user = await User.findOne({where: {id: link}})
+            await mailController.sendResetPasswordMail(user.email, `${process.env.API_URL}/api/user/resetPassword/${user.id}`)
+
+            return res.json({ msg: "Mail sent" })
+        } catch (e) {
+            return next(ApiError.badRequest(e.message))
+        }
+    }
+
+    //  Здесь следует заменить userId на нормальную ссылку, но ее нужно где то хранить... (вероятно в самом юзере)))
+    async setNewPassword(req, res, next) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                const errorMessage = errors.array().map(error => `${error.msg}`).join(', ')
+                return next(ApiError.badRequest(`Ошибка при валидации: ${errorMessage}`))
+            }
+
+            const {link} = req.params
+            const {password} = req.body
+            const user = await User.findOne({where: {id: link}})
+
+            const hashPassword = await bcrypt.hash(password, 5)
+            user.password = hashPassword
+            await user.save()
+
+            return res.json({ user })
+        } catch (e) {
+            return next(ApiError.badRequest(e.message))
+        }
+    }
 }
 
 module.exports = new UserController();

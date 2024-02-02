@@ -29,6 +29,22 @@ class MailController {
                 `
         })
     }
+
+    async sendResetPasswordMail(to, link) {
+        await this.transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to,
+            subject: `Сброс пароля ${process.env.API_URL}`,
+            text: '',
+            html:
+                `
+                    <div>
+                        <h1>Для сброса пароля перейдите по ссылке</h1>
+                        <a href="${link}">${link}</a>
+                    </div>
+                `
+        })
+    }
 }
 
 module.exports = new MailController()
